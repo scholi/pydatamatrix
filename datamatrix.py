@@ -14,7 +14,7 @@ s03="".join([chr(i) for i in [96]+range(65,91)+range(123,128)])
 
 class DataMatrix:
 	def mul(self,a,b):
-		# Multiplication is Galois Ring 256
+		# Multiplication in Galois Ring 256
 		if a==0 or b==0: m=0
 		else: m=self.alog[(self.log[a]+self.log[b])%255]
 		return m
@@ -23,6 +23,7 @@ class DataMatrix:
 		self.data=[]
 		self.mode="ASCII"
 		# Create Lookup Table for log and alog in Galois Ring 256
+		# alog is the log-inverse function. ie.: alog(log(x))=x
 		self.alog={0:1}
 		self.log={1:0}
 		for i in range(1,256):
@@ -318,7 +319,6 @@ class DataMatrix:
 		z=8
 		im=im.resize((z*(self.ncol+2*self.dataRegion[1]),z*(self.nrow+2*self.dataRegion[0])))
 		im.save("datamatrix.png","PNG")
-		im.show()
 		del im
 	def process(self):
 		# This create the entire datamatrix out of self.data
@@ -329,14 +329,22 @@ class DataMatrix:
 		self.ncol=n[0][0]
 		self.nrow=n[0][1]
 		self.dataRegion=n[1][2]
+		print("Data-matrix size: %ix%i"%(self.ncol,self.nrow))
+		print("Datamatrix regions: %ix%i"%self.dataRegion)
+		print("Datamatrix capacity: %i"%(self.nrow*self.ncol/8))
+		print("Data size: %i"%(len(self.data)))
+		print("Data capacity: %i"%(n[1][0]))
 		# Padd data
 		# If not all the data fill de datamatrix, a 254 MC should be added to mark the end of data
-		self.switchASCII()
-		if n[1][0]>len(self.data): self.data+=[254]
-		# Fill the free space with MC 129
-		self.data+=[129]*(n[1][0]-len(self.data))
+		if n[1][0]>len(self.data):
+			self.switchASCII()
+			self.data+=[254]
+			# Fill the free space with MC 129
+			self.data+=[129]*(n[1][0]-len(self.data))
+		print("Data size after padding: %i"%(len(self.data)))
 		# Calculate Read-Solomon code
 		self.RS(n[1][1])
+		print("Data size after RS: %i"%(len(self.data)))
 #		print("Data: ",self.data)
 		# Calculate Matrix => self.array
 		self.mapDataMatrix()
@@ -363,5 +371,5 @@ class DataMatrix:
 if __name__=="__main__":	
 	d=DataMatrix("")
 	d.switchTEXT()
-	d.encodeTEXT("bonjour!")
+	d.encodeTEXT("Hello")
 	d.process()
